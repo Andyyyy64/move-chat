@@ -109,12 +109,12 @@ program
       // TUIで選択
       p.intro('move-chat push');
 
-      const hint = projectSessions.length > 0
-        ? `${basename(cwd)} (${projectSessions.length} sessions)`
-        : 'all projects';
+      if (projectSessions.length === 0) {
+        p.log.warn(`No sessions found for ${basename(cwd)} — showing all projects`);
+      }
 
       const selected = await p.multiselect({
-        message: `Select sessions to push [${hint}] (space to select, enter to confirm)`,
+        message: 'Select sessions to push (space to select, enter to confirm)',
         options: candidates.slice(0, 30).map(s => ({
           value: s.sessionId,
           label: formatSessionLabel(s, claudeDir),
