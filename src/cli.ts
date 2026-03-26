@@ -179,37 +179,43 @@ program
 
     const spinner = p.spinner();
 
-    spinner.start('Downloading...');
-    const { key, gistId } = parseTransferCode(code);
-    const encrypted = downloadFromGist(gistId);
-    spinner.stop('Downloaded.');
-
-    spinner.start('Decrypting and unpacking...');
-    const bundle = decrypt(encrypted, key);
-    const claudeDir = getClaudeDir();
-    const { sessionId, cwd } = unpackSession(claudeDir, bundle, opts.cwd ?? null);
-    spinner.stop('Unpacked.');
-
-    spinner.start('Cleaning up gist...');
     try {
-      deleteGist(gistId);
-      spinner.stop('Gist deleted.');
-    } catch {
-      spinner.stop('Could not delete gist — delete it manually.');
+      spinner.start('Downloading...');
+      const { key, gistId } = parseTransferCode(code);
+      const encrypted = downloadFromGist(gistId);
+      spinner.stop('Downloaded.');
+
+      spinner.start('Decrypting and unpacking...');
+      const bundle = decrypt(encrypted, key);
+      const claudeDir = getClaudeDir();
+      const { sessionId, cwd } = unpackSession(claudeDir, bundle, opts.cwd ?? null);
+      spinner.stop('Unpacked.');
+
+      spinner.start('Cleaning up gist...');
+      try {
+        deleteGist(gistId);
+        spinner.stop('Gist deleted.');
+      } catch {
+        spinner.stop('Could not delete gist — delete it manually.');
+      }
+
+      p.note(
+        [
+          `Session ID: ${sessionId}`,
+          `Project:    ${cwd}`,
+          '',
+          `Resume with:`,
+          `  claude --resume ${sessionId}`,
+        ].join('\n'),
+        'Session imported',
+      );
+
+      p.outro('Done!');
+    } catch (err) {
+      spinner.stop('Failed.');
+      p.log.error(String(err));
+      process.exit(1);
     }
-
-    p.note(
-      [
-        `Session ID: ${sessionId}`,
-        `Project:    ${cwd}`,
-        '',
-        `Resume with:`,
-        `  claude --resume ${sessionId}`,
-      ].join('\n'),
-      'Session imported',
-    );
-
-    p.outro('Done!');
   });
 
 program
